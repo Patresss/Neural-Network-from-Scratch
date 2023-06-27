@@ -36,8 +36,10 @@ public class DigitRecognizer {
 //        System.out.println(imagesTest.get(0).toString());
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(List.of(
-                new FullyConnectedLayer(28 * 28, 8, 0.1, ActivationFunction.RE_LU, CostFunction.SQUARE),
-                new FullyConnectedLayer(8, 10, 0.1, ActivationFunction.RE_LU, CostFunction.SQUARE)
+//                new FullyConnectedLayer(28 * 28, 10, 0.1, ActivationFunction.SIGMOID, CostFunction.JAVA_POINT_SQUARE)
+
+                new FullyConnectedLayer(28 * 28, 8, 0.1, ActivationFunction.SIGMOID, CostFunction.SQUARE),
+                new FullyConnectedLayer(8, 10, 0.1, ActivationFunction.SIGMOID, CostFunction.SQUARE)
         ));
 
         int epochs = 3;

@@ -14,4 +14,27 @@ public abstract class Layer {
     public abstract Vector forward(Vector inputs);
 
     public abstract Vector backPropagation(Vector expectedOutputs);
+
+    public abstract void backPropagationOutputLayer(Vector expectedOutputs);
+
+
+    public abstract void applyGradients();
+
+    public abstract void updateGradients();
+
+    public abstract void backPropagationHiddenLayer(List<Neuron> oldNodeValues);
+
+    public abstract Vector backPropagationOutput(Vector expectedOutputs);
+
+    public abstract Vector backPropagationHidden(Vector expectedOutputs);
+
+    public abstract Vector backPropagationO(Vector expectedOutputs);
+
+    public abstract Vector backPropagationDlaWszystkich(Vector expectedOutputs);
+
+    public abstract Vector backPropagationNew(Vector expectedOutputs);
+
+    public abstract Vector fullyConnectedForwardPass(Vector output);
+
+    public abstract List<Neuron> getNeurons();
 }

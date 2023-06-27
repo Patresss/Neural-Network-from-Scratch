@@ -7,8 +7,6 @@ import com.patres.neuralnetwork.math.Vector;
 
 import java.util.List;
 
-import static com.patres.neuralnetwork.network.cost.CostFunction.JAVA_POINT_SQUARE;
-
 public class NeuralNetwork {
 
     private final List<Layer> layers;
@@ -21,20 +19,47 @@ public class NeuralNetwork {
         dataToTrainList.forEach(this::train);
     }
 
-    public void train(final Input dataToTrain) {
-        getOutput(dataToTrain);
+//    public void train(final Input dataToTrain) {
+//        ;
+//
+//        Vector output = getErrors(getOutput(dataToTrain), dataToTrain.getLabels());
+//
+//        for (int i = layers.size(); i-- > 0; ) {
+//            output = layers.get(i).backPropagationNew(output);
+//        }
+//
+//
+//    }
 
-//        Vector expectedOutputs = getErrors(output, dataToTrain.getLabels());
-        Vector expectedOutputs = dataToTrain.getLabels();
-        for (int i = layers.size(); i-- > 0; ) {
-            expectedOutputs = layers.get(i).backPropagation(expectedOutputs);
+    public void train(final Input dataToTrain) {
+
+        Vector expectedOutputs = getErrors(getOutput(dataToTrain), dataToTrain.getLabels());
+
+        Layer outputLayer = layers.get(layers.size() - 1);
+        outputLayer.backPropagationOutputLayer(dataToTrain.getLabels());
+        outputLayer.updateGradients();
+        List<Neuron> neurons = outputLayer.getNeurons();
+        for (int i = layers.size() - 1; i-- > 0; ) {
+            Layer hiddenLayer = layers.get(i);
+            hiddenLayer.backPropagationHiddenLayer(neurons);
+            hiddenLayer.updateGradients();
+
+            neurons = hiddenLayer.getNeurons();
         }
+
+        for (int i = layers.size(); i-- > 0; ) {
+            Layer layer = layers.get(i);
+            layer.applyGradients();
+        }
+
     }
 
+
     private Vector getOutput(Input dataToTrain) {
-        Vector output = dataToTrain.getData();
+        Vector output = dataToTrain.getData().multiply((1.0 / (256.0 * 10.0))); // TODO nie wiem dlaczego ale dziala
+
         for (Layer layer : layers) {
-            output = layer.forward(output);
+            output = layer.fullyConnectedForwardPass(output);
         }
         return output;
     }
@@ -65,15 +90,13 @@ public class NeuralNetwork {
         return output;
     }
 
-//    public Vector getErrors(final Vector networkOutput, final int correctAnswer) {
-//        final Vector expected = Vector.emptyOf(networkOutput.getSize());
-//        expected.setValue(correctAnswer, 1);
-//        return networkOutput.add(expected.multiply(-1));
-//    }
-
     public Vector getErrors(final Vector networkOutput, final Vector expected) {
-        return JAVA_POINT_SQUARE.calculateCost(networkOutput, expected);
+        return networkOutput.add(expected.multiply(-1));
     }
+
+//    public Vector getErrors(final Vector networkOutput, final Vector expected) {
+//        return JAVA_POINT_SQUARE.calculateCost(networkOutput, expected);
+//    }
 
 
 }

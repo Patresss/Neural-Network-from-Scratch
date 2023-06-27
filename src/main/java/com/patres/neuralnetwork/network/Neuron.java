@@ -14,6 +14,8 @@ public class Neuron {
     private Vector lastInput; // X
     private double lastOutputBeforeActivation; // Z
     private double lastOutput;
+    private double nodeValue;
+    private Vector costGradientW;
 
 
     public Neuron(final int numberOfInputs, final ActivationFunction activation, final CostFunction cost) {
@@ -21,6 +23,7 @@ public class Neuron {
         this.bias = 0.0;
         this.activation = activation;
         this.cost = cost;
+        this.costGradientW = Vector.gaussianOf(numberOfInputs);;
     }
 
     public Neuron(final Vector weights, final double bias, final ActivationFunction activation, final CostFunction cost) {
@@ -29,6 +32,13 @@ public class Neuron {
         this.activation = activation;
         this.cost = cost;
     }
+
+
+//    public double forward(Vector inputs) {
+//        lastOutputBeforeActivation = inputs.dotProduct(weights) + bias;
+//        lastOutput = activation.activate(lastOutputBeforeActivation);
+//        return lastOutput;
+//    }
 
 
     public double forward(Vector inputs) {
@@ -54,7 +64,16 @@ public class Neuron {
      * ∂Z
      */
     public double activationDerivativeByOutputBeforeActivationDerivative() {
-        return activation.derivative(lastOutput);
+        return activation.derivative(lastOutputBeforeActivation); // TODO bylo lastOutput
+    }
+
+    /**
+     * ∂Z
+     * --
+     * ∂A (z poprzedniej wwartwy)
+     */
+    public double weightedInputDerivativeByActivationDerivative() {
+        return activation.derivative(lastOutputBeforeActivation); // TODO bylo lastOutput
     }
 
     /**
@@ -100,11 +119,116 @@ public class Neuron {
                 .multiply(errorDerivativeByActivationDerivative(expectedOutput));  // dC / dA
     }
 
-    public Vector learn(final double expectedOutput, final double learningRate) {
-        Vector dLdX = errorDerivativeByLastWeightsDerivative(expectedOutput);
-        Vector weightRatioToChange = errorDerivativeByWeightsDerivative(expectedOutput).multiply(learningRate);
-        weights = weights.subtract(weightRatioToChange);
-        return dLdX;
+    public double calculateNodeValue(final double expectedOutput) { // ∂C / ∂W
+        return activationDerivativeByOutputBeforeActivationDerivative() // ∂A / ∂Z
+                * errorDerivativeByActivationDerivative(expectedOutput);  // ∂C / ∂A
     }
 
+    public Vector learnOutput(final double expectedOutput, final double learningRate) {
+        Vector nodeValue = weights
+                .multiply(activationDerivativeByOutputBeforeActivationDerivative()) // ∂A/∂Z
+                .multiply(errorDerivativeByActivationDerivative(expectedOutput));  // ∂C/∂A
+
+        // ∂C/∂W
+        Vector weightRatioToChange = outputBeforeActivationDerivativeByWeightsDerivative() // ∂Z/∂W
+                .multiply(activationDerivativeByOutputBeforeActivationDerivative()) // ∂A/∂Z
+                .multiply(errorDerivativeByActivationDerivative(expectedOutput));  // ∂C/∂A
+
+        weights = weights.subtract(weightRatioToChange.multiply(learningRate));
+        return nodeValue;
+    }
+
+    public Vector learnHidden(final double nodeValueWeigthedPreviousLayer, final double learningRate) {
+
+        // ∂C/∂W
+        Vector weightRatioToChange =
+                outputBeforeActivationDerivativeByWeightsDerivative() // ∂Z/∂W
+                .multiply(nodeValueWeigthedPreviousLayer)
+                .multiply(activation.derivative(lastOutputBeforeActivation));
+
+        weights = weights.subtract(weightRatioToChange.multiply(learningRate));
+
+        return weightRatioToChange;
+    }
+
+
+//    public Vector learn(final double expectedOutput, final double learningRate) {
+//        nodeValue = calculateNodeValue(expectedOutput);
+//
+//        //        // Partial derivative of the weighted input with respect to the input
+//        Vector output = weights.multiply(nodeValue);
+//
+//        Vector weightRatioToChange = lastInput.multiply(nodeValue * learningRate);
+//        weights = weights.subtract(weightRatioToChange);
+//        return output;
+//    }
+
+//    public Vector learnOutput(final double expectedOutput, final double learningRate) {
+//        Vector output = weights.multiply(
+//                cost.calculateCost(lastOutput, expectedOutput) *
+//                activation.derivative(lastOutput));
+//        // iteruj po inputach? TODO
+//        nodeValue = calculateNodeValue(expectedOutput);
+//
+////        Vector output = weights.multiply(nodeValue);
+//
+//
+//        Vector weightRatioToChange = lastInput.multiply(nodeValue * learningRate);
+//        weights = weights.subtract(weightRatioToChange);
+//        return output;
+//    }
+
+    public Vector learnOutputDlaWszystkich(final double dLdO, final double learningRate) {
+
+        // iteracja po j
+        Vector output = weights
+                .multiply(dLdO * activation.derivative(lastOutput));
+
+        Vector weightRatioToChange = lastInput
+                .multiply(dLdO * activation.derivative(lastOutput))
+                .multiply(learningRate);
+        weights = weights.subtract(weightRatioToChange);
+        return output;
+    }
+
+
+//
+//    public double learnHidden(final double nodeValueWithWeightFromOldLayer, final double learningRate) {
+//
+//        Vector weightRatioToChange =     lastInput.multiply(
+//                nodeValueWithWeightFromOldLayer *
+//                        activation.derivative(lastOutput));
+//
+//        // nodeValueWithWeight -> weightedInputDerivative * oldNodeValues[oldNodeIndex]
+//
+//        double sumValues = nodeValueWithWeightFromOldLayer;
+//        double nodeValueInner = activation.derivative(lastOutput) * sumValues;
+//
+////        Vector weightRatioToChange = lastInput.multiply(nodeValueInner).multiply(learningRate);
+//        weights = weights.subtract(weightRatioToChange.multiply(learningRate));
+//        return nodeValueInner;
+//    }
+
+    public Vector getWeights() {
+        return weights;
+    }
+
+    public double getBias() {
+        return bias;
+    }
+    public double getNodeValue() {
+        return nodeValue;
+    }
+
+    public void setNodeValue(double nodeValue) {
+        this.nodeValue = nodeValue;
+    }
+
+    public Vector getCostGradientW() {
+        return costGradientW;
+    }
+
+    public void setCostGradientW(Vector costGradientW) {
+        this.costGradientW = costGradientW;
+    }
 }

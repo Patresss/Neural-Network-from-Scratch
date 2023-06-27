@@ -72,6 +72,10 @@ public class Vector {
         return result;
     }
 
+    public Vector add(final double value) {
+        return createNewVector((index) -> getValue(index) + value);
+    }
+
     public Vector subtract(final Vector vector) {
         return createNewVector((index) -> getValue(index) - vector.getValue(index));
     }
