@@ -59,7 +59,7 @@ public class NeuralNetwork {
         Vector output = dataToTrain.getData().multiply((1.0 / (256.0 * 10.0))); // TODO nie wiem dlaczego ale dziala
 
         for (Layer layer : layers) {
-            output = layer.fullyConnectedForwardPass(output);
+            output = layer.forward(output);
         }
         return output;
     }
